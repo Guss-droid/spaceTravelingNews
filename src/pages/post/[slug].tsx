@@ -14,7 +14,7 @@ import { FiClock, FiUser, FiCalendar } from 'react-icons/fi'
 import commons from '../../styles/common.module.scss'
 import styles from './post.module.scss';
 
-interface IPostProps {
+interface PostProps {
   first_publication_date: string | null;
   data: {
     title: string;
@@ -31,11 +31,11 @@ interface IPostProps {
   };
 }
 
-interface IPosts {
-  post: IPostProps;
+interface Posts {
+  post: PostProps;
 }
 
-export default function Post({ post }: IPosts) {
+export default function Post({ post }: Posts) {
 
   const wordsTotal = post.data.content.reduce((total, item) => {
 
@@ -51,7 +51,7 @@ export default function Post({ post }: IPosts) {
   const router = useRouter()
 
   if (router.isFallback) {
-    return <h1>Carregando...</h1>
+    return <h1 className={styles.loadingPage}>Carregando...</h1>
   }
 
   const formatDate = format(
@@ -109,13 +109,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   const paths = posts.results.map(post => ({
     params: {
-      slug: post.uid
-    }
+      slug: post.uid,
+    },
   }))
 
   return {
     paths,
-    fallback: false
+    fallback: true
   }
 };
 
