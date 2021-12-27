@@ -1,1 +1,9 @@
-// TODO
+.infoPost {
+  display: flex;
+  color: var(--info);
+  align-items: center;
+  
+  time, p {
+    margin: 0 1.2rem 0 0.6rem;
+  }
+}
