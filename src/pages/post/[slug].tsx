@@ -9,6 +9,8 @@ import { RichText } from 'prismic-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+import { Comments } from '../../components/Comments';
+
 import { FiClock, FiUser, FiCalendar } from 'react-icons/fi'
 
 import commons from '../../styles/common.module.scss'
@@ -16,8 +18,10 @@ import styles from './post.module.scss';
 
 interface PostProps {
   first_publication_date: string | null;
+  last_publication_date?: string | null;
   data: {
     title: string;
+    subtitle: string;
     banner: {
       url: string;
     };
@@ -62,6 +66,13 @@ export default function Post({ post }: Posts) {
     }
   )
 
+  // const editedDate = format(
+  //   new Date(post.last_publication_date),
+  //   `dd MMM yyy', às 'HH:mm`,
+  //   {
+  //     locale: ptBR
+  //   }
+  // )
 
   return (
     <>
@@ -85,6 +96,12 @@ export default function Post({ post }: Posts) {
             <FiClock />
             <p>{`${reading} min`}</p>
           </div>
+          {/* {post.last_publication_date === post.first_publication_date
+            ?
+            <></>
+            :
+            <p className={styles.infoEdited}>* editado em {editedDate}</p>
+          } */}
           {post.data.content.map((cont, i) => (
             <article key={i} className={styles.text}>
               <h1>{cont.heading}</h1>
@@ -95,6 +112,13 @@ export default function Post({ post }: Posts) {
             </article>
           ))}
         </div>
+
+        <div className={styles.footer}>
+          <nav>
+
+          </nav>
+        </div>
+        <Comments />
       </main>
     </>
   )
@@ -129,9 +153,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const post = {
     uid: res.uid,
     first_publication_date: res.first_publication_date,
+    last_publication_date: res.last_publication_date,
     data: {
       title: res.data.title,
       author: res.data.author,
+      subtitle: res.data.subtitle,
       banner: {
         url: res.data.banner.url
       },

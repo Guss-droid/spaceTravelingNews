@@ -19,31 +19,38 @@
     font-weight: 900;
   }
 
+  .infoEdited {
+    padding: 0.7rem 0 0;
+    color: var(--info);
+    font-style: italic;
+  }
+
   .text {
-    padding-top: 3rem;
+    padding-top: 2rem;
 
     >h1 {
       font-size: 1.8rem;
+      padding: 1rem 0;
     }
-
+    
     .textContent {
       line-height: 1.5rem;
       font-size: 1.125rem;
-      color: var(--gray-100);
-
+      color: var(--body);
+      
       p, ul, li, h2, h3 {
         margin: 1.2rem 0;
       }
-
+      
       a {
         color: var(--highlight);
         text-decoration: underline;
       }
-
+      
       li {
         list-style: disc;
       }
-
+      
       strong {
         font-weight: bold;
         font-size: 1.2rem;
@@ -52,13 +59,11 @@
     }
 
     & + .text {
-      padding: 2rem 0;
+      padding: 0.5rem 0;
     }
 
+    &:last-child {
+      padding: 0 0 1.5rem;
+    }
   }
-}
-
-.loadingPage {
-  margin: 0 2rem;
-  color: var(--highlight);
 }
