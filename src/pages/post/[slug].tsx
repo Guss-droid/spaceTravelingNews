@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import Link from 'next/link'
 import { useRouter } from 'next/router';
 import { GetStaticPaths, GetStaticProps } from 'next';
 
@@ -9,14 +10,15 @@ import { RichText } from 'prismic-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-import { Comments } from '../../components/Comments';
-
+import { Giscus } from '@giscus/react';
+import { ExitButton } from '../../components/ExitButton';
 import { FiClock, FiUser, FiCalendar } from 'react-icons/fi'
 
 import commons from '../../styles/common.module.scss'
 import styles from './post.module.scss';
 
 interface PostProps {
+  uid?: string;
   first_publication_date: string | null;
   last_publication_date?: string | null;
   data: {
@@ -37,9 +39,17 @@ interface PostProps {
 
 interface Posts {
   post: PostProps;
+  previousPost?: PostProps;
+  nextPost?: PostProps;
+  preview: boolean;
 }
 
-export default function Post({ post }: Posts) {
+export default function Post({
+  post,
+  nextPost,
+  previousPost,
+  preview
+}: Posts) {
 
   const wordsTotal = post.data.content.reduce((total, item) => {
 
@@ -66,13 +76,13 @@ export default function Post({ post }: Posts) {
     }
   )
 
-  // const editedDate = format(
-  //   new Date(post.last_publication_date),
-  //   `dd MMM yyy', às 'HH:mm`,
-  //   {
-  //     locale: ptBR
-  //   }
-  // )
+  const editedDate = format(
+    new Date(post.last_publication_date),
+    `dd MMM yyy', às 'HH:mm`,
+    {
+      locale: ptBR
+    }
+  )
 
   return (
     <>
@@ -96,12 +106,12 @@ export default function Post({ post }: Posts) {
             <FiClock />
             <p>{`${reading} min`}</p>
           </div>
-          {/* {post.last_publication_date === post.first_publication_date
+          {post.last_publication_date === post.first_publication_date
             ?
             <></>
             :
             <p className={styles.infoEdited}>* editado em {editedDate}</p>
-          } */}
+          }
           {post.data.content.map((cont, i) => (
             <article key={i} className={styles.text}>
               <h1>{cont.heading}</h1>
@@ -113,12 +123,40 @@ export default function Post({ post }: Posts) {
           ))}
         </div>
 
-        <div className={styles.footer}>
-          <nav>
+        <div className={styles.footerContent}>
+          <nav
+            className={styles.postsNavigation}
+            style={{ flexDirection: previousPost ? 'row' : 'row-reverse' }}
+          >
+            {previousPost && (
+              <Link href={`/post/${previousPost.uid}`}>
+                <a className={styles.previousPost}>
+                  {previousPost.data.title}
+                  <span>Post anterior</span>
+                </a>
+              </Link>
+            )}
+
+            {nextPost && (
+              <Link href={`/post/${nextPost.uid}`}>
+                <a className={styles.nextPost}>
+                  {nextPost.data.title}
+                  <span>Próximo post</span>
+                </a>
+              </Link>
+            )}
 
           </nav>
+          <Giscus
+            repo="Guss-droid/spaceTravelingNews"
+            repoId="R_kgDOGkb-gw"
+            mapping="pathname"
+            reactionsEnabled="1"
+            emitMetadata="1"
+            theme="dark"
+          />
+          {preview && <ExitButton haveStyles={styles.exitPreview} />}
         </div>
-        <Comments />
       </main>
     </>
   )
@@ -143,12 +181,49 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 };
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({
+  params,
+  preview = false,
+  previewData = {}
+}) => {
 
   const prismic = getPrismicClient();
   const { slug } = params
 
-  const res = await prismic.getByUID('post', String(slug), {});
+  const res = await prismic.getByUID('post', String(slug), {
+    ref: previewData?.ref ?? null
+  });
+
+  if (!res) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false
+      }
+    }
+  }
+
+  const previousRes = await prismic.query(
+    [Prismic.predicates.at('document.type', 'post')],
+    {
+      fetch: ['post.title'],
+      after: res.id,
+      orderings: '[document.first_publication_date desc]',
+      pageSize: 1,
+      ref: previewData?.ref ?? null,
+    }
+  )
+
+  const nextRes = await prismic.query(
+    [Prismic.predicates.at('document.type', 'post')],
+    {
+      fetch: ['post.title'],
+      after: res.id,
+      orderings: '[document.first_publication_date]',
+      pageSize: 1,
+      ref: previewData?.ref ?? null,
+    }
+  )
 
   const post = {
     uid: res.uid,
@@ -168,5 +243,18 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
   }
 
-  return { props: { post } }
+  return {
+    props: {
+      post,
+      previousPost: previousRes.results.length ? {
+        uid: previousRes.results[0].uid,
+        data: { title: previousRes.results[0].data.title },
+      } : null,
+      nextPost: nextRes.results.length ? {
+        uid: nextRes.results[0].uid,
+        data: { title: nextRes.results[0].data.title },
+      } : null,
+      preview
+    }
+  }
 };

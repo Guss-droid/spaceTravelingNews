@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { FiCalendar, FiUser } from 'react-icons/fi'
+import { ExitButton } from '../components/ExitButton';
 
 import commons from '../styles/common.module.scss'
 import styles from './home.module.scss';
@@ -31,9 +32,10 @@ interface IPostPagination {
 
 interface IHomeProps {
   postsPagination: IPostPagination;
+  preview: boolean;
 }
 
-export default function Home({ postsPagination }: IHomeProps) {
+export default function Home({ postsPagination, preview }: IHomeProps) {
 
   const [posts, setPosts] = useState<IPostPagination>({
     ...postsPagination,
@@ -95,19 +97,24 @@ export default function Home({ postsPagination }: IHomeProps) {
             Carregar mais posts
           </button>
         )}
+        {preview && <ExitButton haveStyles={styles.exitPreview}/>}
       </main>
     </>
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({
+  preview = false,
+  previewData = null
+}) => {
 
   const prismic = getPrismicClient()
 
   const res = await prismic.query([
     Prismic.Predicates.at('document.type', 'post')
   ], {
-    pageSize: 1
+    pageSize: 1,
+    ref: previewData?.ref ?? null
   })
 
   const postsPagination = {
@@ -116,6 +123,6 @@ export const getStaticProps: GetStaticProps = async () => {
   }
 
   return {
-    props: { postsPagination }
+    props: { postsPagination, preview }
   }
 }
